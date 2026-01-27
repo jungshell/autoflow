@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getContacts, createContact, getTasksByContact } from '@/lib/firestore';
+import { getContacts, createContact, getTasksByContact } from '@/lib/firestoreAdmin';
 import { getUidFromRequest } from '@/lib/apiAuth';
 import { API_MESSAGES } from '@/lib/apiMessages';
 

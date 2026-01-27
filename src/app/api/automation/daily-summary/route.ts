@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { generateDailySummary } from '@/lib/automation';
-import { createAlert } from '@/lib/firestore';
+import { createAlert } from '@/lib/firestoreAdmin';
+import { sendSlackMessage } from '@/lib/slack';
 import { API_MESSAGES } from '@/lib/apiMessages';
 
 export async function POST() {
@@ -8,8 +9,9 @@ export async function POST() {
     const summary = await generateDailySummary();
     await createAlert({
       type: 'summary',
-      message: summary
+      message: summary,
     });
+    await sendSlackMessage(`📋 AutoFlow 데일리 요약\n${summary}`);
     return NextResponse.json({ success: true, summary });
   } catch (error) {
     console.error('Error generating daily summary:', error);

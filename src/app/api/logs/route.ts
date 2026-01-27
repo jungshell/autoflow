@@ -5,7 +5,7 @@ import {
   updateWorkLog,
   deleteAllWorkLogs,
   deleteWorkLogsByFilename,
-} from '@/lib/firestore';
+} from '@/lib/firestoreAdmin';
 
 export const runtime = 'nodejs';
 

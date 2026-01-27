@@ -20,6 +20,7 @@ export type Task = {
   assigneeId?: string; // 담당자 ID
   assigner?: string; // 지시자 (누가 지시했는지)
   receivedAt?: string; // 업무접수일 (업무를 접수한 날, ISO 문자열)
+  calendarEventId?: string; // Google Calendar 이벤트 ID
   createdAt?: Date | any; // Firestore Timestamp
   updatedAt?: Date | any; // Firestore Timestamp
 };

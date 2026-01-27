@@ -1,4 +1,4 @@
-import { getTasks, updateTask, createAlert } from './firestore';
+import { getTasks, createAlert } from './firestoreAdmin';
 import type { Task, TaskPriority } from '@/types/models';
 
 /**
@@ -30,27 +30,29 @@ export function calculatePriority(task: Task): TaskPriority {
 }
 
 /**
- * 지연 감지 및 알림 생성
+ * 지연 감지 및 알림 생성. 생성된 지연 알림 개수를 반환합니다.
  */
-export async function detectDelays(): Promise<void> {
+export async function detectDelays(): Promise<{ delayedCount: number }> {
   const tasks = await getTasks();
   const now = new Date();
-  
+  let delayedCount = 0;
+
   for (const task of tasks) {
     if (task.status === 'done') continue;
-    
+
     const dueDate = task.dueAt ? new Date(task.dueAt) : null;
     if (dueDate && dueDate < now) {
       const daysDelayed = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      // 지연 알림 생성
       await createAlert({
         type: 'delay',
         message: `지연 감지: '${task.title}'가 ${daysDelayed}일 지연되었습니다.`,
-        taskId: task.id
+        taskId: task.id,
+        ownerId: task.ownerId,
       });
+      delayedCount++;
     }
   }
+  return { delayedCount };
 }
 
 /**

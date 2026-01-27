@@ -21,6 +21,12 @@ export const metadata: Metadata = {
   title: "AutoFlow - 업무 자동화 대시보드",
   description:
     "스마트 우선순위, 요약 알림, 시각화로 업무 효율을 극대화하는 업무 자동화 앱",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
 };
 
 export default function RootLayout({

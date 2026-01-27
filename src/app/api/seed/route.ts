@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
-import { 
-  createTask, 
-  createContact, 
+import {
+  createTask,
+  createContact,
   createAlert,
-  createTemplate 
-} from '@/lib/firestore';
-import { Timestamp } from 'firebase/firestore';
+  createTemplate,
+  getTasks,
+  getContacts,
+} from '@/lib/firestoreAdmin';
 import type { Task, Contact, Alert, Template } from '@/types/models';
 import { API_MESSAGES } from '@/lib/apiMessages';
 
 export async function POST() {
   try {
     // 기존 데이터 확인 (중복 방지)
-    const { getTasks, getContacts } = await import('@/lib/firestore');
     const existingTasks = await getTasks();
     const existingContacts = await getContacts();
     

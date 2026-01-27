@@ -20,12 +20,26 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   min-height: 100vh;
+  /* 모바일 세이프 에리어 (노치·홈 인디케이터) */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* 터치 영역 최소 높이 (접근성) */
+/* 터치 영역 최소 높이 (접근성·모바일) */
 button:not([aria-hidden="true"]),
 a[role="button"],
 [role="button"] {
   min-height: 44px;
   min-width: 44px;
+}
+
+/* 모바일에서 터치 스크롤 개선 */
+@supports (overflow: overlay) {
+  .overflow-auto,
+  .overflow-y-auto {
+    overflow: overlay;
+  }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTemplates } from '@/lib/firestore';
+import { getTemplates } from '@/lib/firestoreAdmin';
 import { getUidFromRequest } from '@/lib/apiAuth';
 import { API_MESSAGES } from '@/lib/apiMessages';
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUidFromRequest } from '@/lib/apiAuth';
-import { getWorkLogs } from '@/lib/firestore';
+import { getWorkLogs } from '@/lib/firestoreAdmin';
 
 export async function GET(request: Request) {
   try {

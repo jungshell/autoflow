@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getTaskById, updateTask, deleteTask } from '@/lib/firestoreAdmin';
 import { getUidFromRequest } from '@/lib/apiAuth';
 import { API_MESSAGES } from '@/lib/apiMessages';
+import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/googleCalendar';
 
 function canAccessTask(task: { ownerId?: string }, uid: string | null): boolean {
   if (!uid) return true;
@@ -48,6 +49,43 @@ export async function PATCH(
     }
     const body = await request.json();
     await updateTask(id, body);
+    
+    // Google Calendar 동기화 (비동기, 실패해도 Task 수정은 성공)
+    if (uid) {
+      try {
+        const updatedTask = { ...existing, ...body };
+        if (existing.calendarEventId) {
+          // 기존 이벤트가 있으면 업데이트 또는 삭제
+          if (updatedTask.dueAt) {
+            await updateCalendarEvent(uid, existing.calendarEventId, {
+              id: updatedTask.id,
+              title: updatedTask.title,
+              description: updatedTask.description,
+              dueAt: updatedTask.dueAt,
+            });
+          } else {
+            // 마감일이 제거되면 이벤트 삭제
+            await deleteCalendarEvent(uid, existing.calendarEventId);
+            await updateTask(id, { calendarEventId: null });
+          }
+        } else if (updatedTask.dueAt) {
+          // 이벤트가 없고 마감일이 추가되면 생성
+          const eventId = await createCalendarEvent(uid, {
+            id: updatedTask.id,
+            title: updatedTask.title,
+            description: updatedTask.description,
+            dueAt: updatedTask.dueAt,
+          });
+          if (eventId) {
+            await updateTask(id, { calendarEventId: eventId });
+          }
+        }
+      } catch (calError) {
+        console.warn('Calendar sync failed (task updated):', calError);
+        // 캘린더 동기화 실패해도 Task 수정은 성공으로 처리
+      }
+    }
+    
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating task:', error);
@@ -72,6 +110,17 @@ export async function DELETE(
     if (!canAccessTask(existing, uid)) {
       return NextResponse.json({ error: '이 업무를 삭제할 수 없습니다.' }, { status: 403 });
     }
+    
+    // Google Calendar 이벤트 삭제 (비동기, 실패해도 Task 삭제는 성공)
+    if (uid && existing.calendarEventId) {
+      try {
+        await deleteCalendarEvent(uid, existing.calendarEventId);
+      } catch (calError) {
+        console.warn('Calendar sync failed (task deleted):', calError);
+        // 캘린더 동기화 실패해도 Task 삭제는 성공으로 처리
+      }
+    }
+    
     await deleteTask(id);
     return NextResponse.json({ success: true });
   } catch (error) {

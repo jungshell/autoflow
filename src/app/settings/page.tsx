@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { getSettings, setSettings, type Settings, type TemplateSchedule } from '@/lib/settings';
 import { useTheme } from '@/components/ThemeProvider';
 import { useTemplates } from '@/hooks/useTemplates';
+import { authFetch } from '@/lib/apiClient';
 
 const DAY_LABELS: { value: TemplateSchedule['day']; label: string }[] = [
   { value: 'monday', label: '월' },
@@ -17,12 +19,15 @@ const DAY_LABELS: { value: TemplateSchedule['day']; label: string }[] = [
 ];
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
   const [settings, setState] = useState<Settings>({});
   const [saved, setSaved] = useState(false);
   const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
   const [newSchedule, setNewSchedule] = useState<{ templateId: string; day: TemplateSchedule['day']; time: string }>({ templateId: '', day: 'monday', time: '09:00' });
+  const [calendarLinking, setCalendarLinking] = useState(false);
   const { theme, setTheme } = useTheme();
   const { templates } = useTemplates();
+  const calendarStatus = searchParams.get('calendar');
 
   useEffect(() => {
     setState(getSettings());
@@ -108,6 +113,72 @@ export default function SettingsPage() {
           >
             연락처 관리 화면으로 이동 →
           </Link>
+        </section>
+
+        <section className="rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-800 dark:shadow-none">
+          <h2 className="mb-4 text-lg font-semibold dark:text-zinc-100">📅 Google Calendar 연동</h2>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+            연동하면 업무 마감일을 Google 캘린더에 이벤트로 추가할 수 있습니다. 환경 변수 설정 후 사용하세요.
+          </p>
+          {calendarStatus === 'connected' && (
+            <p className="mb-3 rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+              Google Calendar 연동이 완료되었습니다.
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={calendarLinking}
+              onClick={async () => {
+                setCalendarLinking(true);
+                try {
+                  const res = await authFetch('/api/integrations/google-calendar/auth');
+                  const data = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    alert(data.hint || data.error || '연동 준비에 실패했습니다.');
+                    return;
+                  }
+                  if (data.url) window.location.href = data.url;
+                } finally {
+                  setCalendarLinking(false);
+                }
+              }}
+              className="rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
+            >
+              {calendarLinking ? '연결 중…' : 'Google 계정으로 연동'}
+            </button>
+            {calendarStatus === 'connected' && (
+              <button
+                type="button"
+                disabled={calendarLinking}
+                onClick={async () => {
+                  setCalendarLinking(true);
+                  try {
+                    const res = await authFetch('/api/integrations/google-calendar/sync', {
+                      method: 'POST',
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                      alert(data.error || '동기화에 실패했습니다.');
+                      return;
+                    }
+                    alert(
+                      `동기화 완료: ${data.synced}개 성공, ${data.failed}개 실패${
+                        data.errors?.length ? `\n\n오류:\n${data.errors.slice(0, 5).join('\n')}` : ''
+                      }`
+                    );
+                  } catch (error) {
+                    alert('동기화 중 오류가 발생했습니다.');
+                  } finally {
+                    setCalendarLinking(false);
+                  }
+                }}
+                className="rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
+              >
+                기존 업무 동기화
+              </button>
+            )}
+          </div>
         </section>
 
         <section className="rounded-3xl bg-white p-6 shadow-sm dark:bg-zinc-800 dark:shadow-none">

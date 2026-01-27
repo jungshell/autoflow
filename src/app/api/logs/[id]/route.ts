@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUidFromRequest } from '@/lib/apiAuth';
-import { getWorkLogById, updateWorkLog, deleteWorkLog } from '@/lib/firestore';
+import { getWorkLogById, updateWorkLog, deleteWorkLog } from '@/lib/firestoreAdmin';
 
 const isValidId = (value: string) =>
   /^[a-zA-Z0-9_-]+$/.test(value) && value.length >= 10;

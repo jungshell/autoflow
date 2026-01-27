@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUidFromRequest } from '@/lib/apiAuth';
-import { createWorkLog } from '@/lib/firestore';
+import { createWorkLog } from '@/lib/firestoreAdmin';
 import { analyzeMeeting, analyzeEmojiTone } from '@/lib/workLogAnalyze';
 
 export const runtime = 'nodejs';
