@@ -25,14 +25,19 @@ export function getAdminApp(): import('firebase-admin').app.App | null {
       adminApp = admin.initializeApp({ credential: admin.credential.cert(credential) });
       return adminApp;
     }
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    const projectId = process.env.FIREBASE_PROJECT_ID?.trim();
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim()?.replace(/\\n/g, '\n');
     if (projectId && clientEmail && privateKey) {
-      adminApp = admin.initializeApp({
-        credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
-      });
-      return adminApp;
+      try {
+        adminApp = admin.initializeApp({
+          credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
+        });
+        return adminApp;
+      } catch (certError) {
+        console.error('Failed to initialize Firebase Admin with individual env vars:', certError instanceof Error ? certError.message : certError);
+        throw certError;
+      }
     }
   } catch (e) {
     console.warn('Firebase Admin init skipped:', e instanceof Error ? e.message : e);
