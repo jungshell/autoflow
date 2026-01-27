@@ -61,27 +61,124 @@ export async function suggestNextActions(): Promise<string[]> {
 }
 
 /**
- * 데일리 요약 생성
+ * 데일리 요약 생성 (상세 버전)
  */
-export async function generateDailySummary(): Promise<string> {
+export interface DailySummaryData {
+  summary: string;
+  todayTasks: Task[];
+  threeDayTasks: Task[];
+  urgentTasks: Task[];
+  delayedTasks: Task[];
+  stats: {
+    total: number;
+    completed: number;
+    completionRate: number;
+    delayedCount: number;
+    todayCount: number;
+    threeDayCount: number;
+    urgentCount: number;
+  };
+}
+
+export async function generateDailySummaryData(): Promise<DailySummaryData> {
   const tasks = await getTasks();
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  
-  const completedToday = tasks.filter(task => {
-    if (task.status !== 'done') return false;
-    // 실제로는 updatedAt을 확인해야 하지만, 여기서는 간단히 처리
-    return true;
-  }).length;
-  
+  const endOfToday = new Date(today);
+  endOfToday.setHours(23, 59, 59, 999);
+  const threeDaysLater = new Date(today);
+  threeDaysLater.setDate(threeDaysLater.getDate() + 3);
+  threeDaysLater.setHours(23, 59, 59, 999);
+
+  // 완료된 업무
+  const completedTasks = tasks.filter(task => task.status === 'done');
+  const completedCount = completedTasks.length;
   const totalTasks = tasks.length;
-  const completionRate = totalTasks > 0 ? Math.round((completedToday / totalTasks) * 100) : 0;
-  
-  const delayedCount = tasks.filter(task => {
+  const completionRate = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+
+  // 오늘 해야 할 일
+  const todayTasks = tasks
+    .filter(task => task.status !== 'done')
+    .filter(task => {
+      if (!task.dueAt) return false;
+      const dueDate = new Date(task.dueAt);
+      return dueDate >= today && dueDate <= endOfToday;
+    })
+    .sort((a, b) => {
+      const aDue = a.dueAt ? new Date(a.dueAt).getTime() : Infinity;
+      const bDue = b.dueAt ? new Date(b.dueAt).getTime() : Infinity;
+      return aDue - bDue;
+    });
+
+  // 3일 내 끝내야 할 일
+  const threeDayTasks = tasks
+    .filter(task => task.status !== 'done')
+    .filter(task => {
+      if (!task.dueAt) return false;
+      const dueDate = new Date(task.dueAt);
+      return dueDate > endOfToday && dueDate <= threeDaysLater;
+    })
+    .sort((a, b) => {
+      const aDue = a.dueAt ? new Date(a.dueAt).getTime() : Infinity;
+      const bDue = b.dueAt ? new Date(b.dueAt).getTime() : Infinity;
+      return aDue - bDue;
+    });
+
+  // 긴급한 일 (지연됨 또는 urgent 우선순위)
+  const nowTime = now.getTime();
+  const urgentTasks = tasks
+    .filter(task => task.status !== 'done')
+    .filter(task => {
+      const dueDate = task.dueAt ? new Date(task.dueAt) : null;
+      // 지연된 업무
+      if (dueDate && dueDate.getTime() < nowTime) return true;
+      // urgent 우선순위
+      if (task.priority === 'urgent') return true;
+      // 24시간 이내 마감
+      if (dueDate) {
+        const hoursUntilDue = (dueDate.getTime() - nowTime) / (1000 * 60 * 60);
+        if (hoursUntilDue <= 24 && hoursUntilDue > 0) return true;
+      }
+      return false;
+    })
+    .sort((a, b) => {
+      const aDue = a.dueAt ? new Date(a.dueAt).getTime() : -Infinity;
+      const bDue = b.dueAt ? new Date(b.dueAt).getTime() : -Infinity;
+      // 지연된 것 먼저
+      if (aDue < nowTime && bDue >= nowTime) return -1;
+      if (aDue >= nowTime && bDue < nowTime) return 1;
+      return aDue - bDue;
+    });
+
+  // 지연된 업무
+  const delayedTasks = tasks.filter(task => {
     if (task.status === 'done') return false;
     const dueDate = task.dueAt ? new Date(task.dueAt) : null;
     return dueDate && dueDate < now;
-  }).length;
-  
-  return `오늘 완료율: ${completionRate}% | 지연 위험: ${delayedCount}건 | 총 업무: ${totalTasks}건`;
+  });
+
+  return {
+    summary: `오늘 완료율: ${completionRate}% | 지연 위험: ${delayedTasks.length}건 | 총 업무: ${totalTasks}건`,
+    todayTasks,
+    threeDayTasks,
+    urgentTasks,
+    delayedTasks,
+    stats: {
+      total: totalTasks,
+      completed: completedCount,
+      completionRate,
+      delayedCount: delayedTasks.length,
+      todayCount: todayTasks.length,
+      threeDayCount: threeDayTasks.length,
+      urgentCount: urgentTasks.length,
+    },
+  };
+}
+
+/**
+ * 데일리 요약 생성 (간단 버전 - 기존 호환성)
+ */
+export async function generateDailySummary(): Promise<string> {
+  const data = await generateDailySummaryData();
+  return data.summary;
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { generateDailySummary } from '@/lib/automation';
+import { generateDailySummary, generateDailySummaryData } from '@/lib/automation';
 import { createAlert } from '@/lib/firestoreAdmin';
-import { sendSlackMessage } from '@/lib/slack';
+import { sendSlackMessage, formatSlackMessage } from '@/lib/slack';
 import { API_MESSAGES } from '@/lib/apiMessages';
 
 async function handleDailySummary() {
@@ -41,7 +41,9 @@ async function handleDailySummary() {
       );
     }
 
-    const summary = await generateDailySummary();
+    // 상세 요약 데이터 생성
+    const summaryData = await generateDailySummaryData();
+    const summary = summaryData.summary;
     
     // createAlert는 ownerId가 없어도 동작하도록 (전체 사용자용 요약)
     try {
@@ -55,14 +57,30 @@ async function handleDailySummary() {
       // 알림 생성 실패해도 요약은 계속 진행
     }
     
-    // Slack 메시지 전송 (실패해도 계속 진행)
+    // Slack 메시지 전송 (구조화된 포맷)
     try {
-      await sendSlackMessage(`📋 AutoFlow 데일리 요약\n${summary}`);
+      const slackMessage = formatSlackMessage({
+        todayTasks: summaryData.todayTasks,
+        threeDayTasks: summaryData.threeDayTasks,
+        urgentTasks: summaryData.urgentTasks,
+        delayedTasks: summaryData.delayedTasks,
+        stats: summaryData.stats,
+      });
+      await sendSlackMessage(slackMessage);
     } catch (slackError) {
       console.warn('Failed to send Slack message (continuing):', slackError);
     }
     
-    return NextResponse.json({ success: true, summary });
+    return NextResponse.json({ 
+      success: true, 
+      summary,
+      data: {
+        todayCount: summaryData.stats.todayCount,
+        threeDayCount: summaryData.stats.threeDayCount,
+        urgentCount: summaryData.stats.urgentCount,
+        delayedCount: summaryData.stats.delayedCount,
+      }
+    });
   } catch (error) {
     console.error('Error generating daily summary:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
