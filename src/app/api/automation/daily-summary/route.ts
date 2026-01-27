@@ -4,7 +4,7 @@ import { createAlert } from '@/lib/firestoreAdmin';
 import { sendSlackMessage } from '@/lib/slack';
 import { API_MESSAGES } from '@/lib/apiMessages';
 
-export async function POST() {
+async function handleDailySummary() {
   try {
     const summary = await generateDailySummary();
     await createAlert({
@@ -20,4 +20,14 @@ export async function POST() {
       { status: 500 }
     );
   }
+}
+
+// Vercel Cron은 GET 요청을 보냅니다
+export async function GET() {
+  return handleDailySummary();
+}
+
+// 기존 클라이언트 호출을 위한 POST도 유지
+export async function POST() {
+  return handleDailySummary();
 }
