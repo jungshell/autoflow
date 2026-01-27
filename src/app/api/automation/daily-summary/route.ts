@@ -10,11 +10,32 @@ async function handleDailySummary() {
     const { getAdminApp } = await import('@/lib/verifyToken');
     const app = getAdminApp();
     if (!app) {
-      console.error('Firebase Admin SDK not initialized. Check FIREBASE_SERVICE_ACCOUNT_JSON environment variable.');
+      const hasJson = !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+      const hasProjectId = !!process.env.FIREBASE_PROJECT_ID;
+      const hasClientEmail = !!process.env.FIREBASE_CLIENT_EMAIL;
+      const hasPrivateKey = !!process.env.FIREBASE_PRIVATE_KEY;
+      
+      console.error('Firebase Admin SDK not initialized.', {
+        hasJson,
+        hasProjectId,
+        hasClientEmail,
+        hasPrivateKey,
+      });
+      
       return NextResponse.json(
         { 
           error: 'Firebase Admin SDK가 초기화되지 않았습니다. 환경 변수를 확인하세요.',
-          hint: 'FIREBASE_SERVICE_ACCOUNT_JSON 환경 변수가 설정되어 있는지 확인하세요.'
+          hint: hasJson 
+            ? 'FIREBASE_SERVICE_ACCOUNT_JSON이 설정되어 있지만 JSON 파싱에 실패했습니다. 형식을 확인하세요.'
+            : hasProjectId && hasClientEmail && hasPrivateKey
+            ? '3개 환경 변수가 설정되어 있지만 초기화에 실패했습니다. 값이 올바른지 확인하세요.'
+            : 'FIREBASE_SERVICE_ACCOUNT_JSON 또는 (FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY) 환경 변수를 설정하세요.',
+          envStatus: {
+            FIREBASE_SERVICE_ACCOUNT_JSON: hasJson ? '설정됨' : '없음',
+            FIREBASE_PROJECT_ID: hasProjectId ? '설정됨' : '없음',
+            FIREBASE_CLIENT_EMAIL: hasClientEmail ? '설정됨' : '없음',
+            FIREBASE_PRIVATE_KEY: hasPrivateKey ? '설정됨' : '없음',
+          }
         },
         { status: 503 }
       );
