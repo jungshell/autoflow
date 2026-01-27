@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { getSettings, setSettings, type Settings, type TemplateSchedule } from '@/lib/settings';
@@ -18,7 +18,7 @@ const DAY_LABELS: { value: TemplateSchedule['day']; label: string }[] = [
   { value: 'sunday', label: '일' },
 ];
 
-export default function SettingsPage() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const [settings, setState] = useState<Settings>({});
   const [saved, setSaved] = useState(false);
@@ -314,5 +314,17 @@ export default function SettingsPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 flex items-center justify-center">
+        <p className="text-zinc-500">로딩 중...</p>
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 }

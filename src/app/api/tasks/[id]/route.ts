@@ -66,7 +66,7 @@ export async function PATCH(
           } else {
             // 마감일이 제거되면 이벤트 삭제
             await deleteCalendarEvent(uid, existing.calendarEventId);
-            await updateTask(id, { calendarEventId: null });
+            await updateTask(id, { calendarEventId: undefined });
           }
         } else if (updatedTask.dueAt) {
           // 이벤트가 없고 마감일이 추가되면 생성

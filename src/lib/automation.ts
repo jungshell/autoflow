@@ -1,33 +1,9 @@
-import { getTasks, createAlert } from './firestoreAdmin';
-import type { Task, TaskPriority } from '@/types/models';
-
 /**
- * 스마트 우선순위 자동 분류
- * 마감일, 지연 여부, 담당자 등을 기반으로 우선순위 자동 계산
+ * 서버 전용: Firebase Admin SDK를 사용하는 자동화 함수들
+ * 클라이언트 컴포넌트에서 import하지 마세요!
  */
-export function calculatePriority(task: Task): TaskPriority {
-  const now = new Date();
-  const dueDate = task.dueAt ? new Date(task.dueAt) : null;
-  
-  // 마감일이 지났으면 긴급
-  if (dueDate && dueDate < now) {
-    return 'urgent';
-  }
-  
-  // 마감일이 24시간 이내면 높음
-  if (dueDate) {
-    const hoursUntilDue = (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-    if (hoursUntilDue <= 24) {
-      return 'high';
-    }
-    if (hoursUntilDue <= 72) {
-      return 'medium';
-    }
-  }
-  
-  // 기본값
-  return task.priority || 'low';
-}
+import { getTasks, createAlert } from './firestoreAdmin';
+import type { Task } from '@/types/models';
 
 /**
  * 지연 감지 및 알림 생성. 생성된 지연 알림 개수를 반환합니다.
@@ -55,29 +31,6 @@ export async function detectDelays(): Promise<{ delayedCount: number }> {
   return { delayedCount };
 }
 
-/**
- * 리마인드 주기 자동 조정
- * 진행률과 중요도에 따라 알림 주기 조정
- */
-export function calculateReminderInterval(task: Task): "6h" | "12h" | "24h" {
-  const priority = calculatePriority(task);
-  const now = new Date();
-  const dueDate = task.dueAt ? new Date(task.dueAt) : null;
-  
-  if (priority === 'urgent' && dueDate) {
-    const hoursUntilDue = (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-    if (hoursUntilDue <= 12) {
-      return '6h';
-    }
-    return '12h';
-  }
-  
-  if (priority === 'high') {
-    return '12h';
-  }
-  
-  return '24h';
-}
 
 /**
  * 다음 액션 자동 제안

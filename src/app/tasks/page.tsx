@@ -18,7 +18,7 @@ import { useContacts } from '@/hooks/useContacts';
 import { useAlerts } from '@/hooks/useAlerts';
 import { useTemplates } from '@/hooks/useTemplates';
 import { useAuth } from '@/components/AuthProvider';
-import { calculatePriority } from '@/lib/automation';
+import { calculatePriority } from '@/lib/taskUtils';
 import { formatDate } from '@/lib/utils';
 import { getSettings, isQuietHourNow } from '@/lib/settings';
 import { authFetch } from '@/lib/apiClient';

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useTasks } from '@/hooks/useTasks';
 import { authFetch } from '@/lib/apiClient';
-import { calculatePriority } from '@/lib/automation';
+import { calculatePriority } from '@/lib/taskUtils';
 
 export default function Home() {
   const router = useRouter();

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getAdminApp } from '@/lib/verifyToken';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
@@ -7,7 +7,7 @@ const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 /**
  * Google OAuth 콜백. code를 토큰으로 교환 후 Firestore에 저장하고 설정 페이지로 리다이렉트합니다.
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const state = searchParams.get('state');

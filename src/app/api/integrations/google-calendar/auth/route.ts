@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getUidFromRequest } from '@/lib/apiAuth';
 
 const SCOPE = 'https://www.googleapis.com/auth/calendar.events';
@@ -9,7 +9,7 @@ const BASE = 'https://accounts.google.com/o/oauth2/v2/auth';
  * GET 요청 시 현재 사용자 uid를 state에 담아 Google OAuth URL을 반환합니다.
  * 프론트에서 이 URL로 리다이렉트하면 됩니다.
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID?.trim();
   const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) {
