@@ -5,9 +5,26 @@ import { getAdminApp } from '@/lib/verifyToken';
 /**
  * 모든 Firestore 데이터 초기화 (Firebase Admin SDK 사용)
  * 주의: 이 API는 모든 컬렉션의 모든 데이터를 삭제합니다.
+ * 보안: 확인 코드가 필요합니다.
  */
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
+    // 보안 확인: 확인 코드 필요
+    const { searchParams } = new URL(request.url);
+    const confirmCode = searchParams.get('confirm');
+    const expectedCode = process.env.DATA_CLEAR_CONFIRM_CODE || 'DELETE_ALL_DATA_CONFIRM_2026';
+    
+    if (confirmCode !== expectedCode) {
+      return NextResponse.json(
+        {
+          error: '데이터 삭제를 위해서는 확인 코드가 필요합니다.',
+          hint: '이 API는 모든 데이터를 삭제합니다. 확인 코드 없이는 실행할 수 없습니다.',
+          usage: 'DELETE /api/seed/clear?confirm=YOUR_CONFIRM_CODE',
+        },
+        { status: 403 }
+      );
+    }
+
     // Firebase Admin SDK 초기화 확인
     const app = getAdminApp();
     if (!app) {

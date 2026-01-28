@@ -148,35 +148,71 @@ function SettingsContent() {
               {calendarLinking ? '연결 중…' : 'Google 계정으로 연동'}
             </button>
             {calendarStatus === 'connected' && (
-              <button
-                type="button"
-                disabled={calendarLinking}
-                onClick={async () => {
-                  setCalendarLinking(true);
-                  try {
-                    const res = await authFetch('/api/integrations/google-calendar/sync', {
-                      method: 'POST',
-                    });
-                    const data = await res.json().catch(() => ({}));
-                    if (!res.ok) {
-                      alert(data.error || '동기화에 실패했습니다.');
+              <>
+                <button
+                  type="button"
+                  disabled={calendarLinking}
+                  onClick={async () => {
+                    setCalendarLinking(true);
+                    try {
+                      const res = await authFetch('/api/integrations/google-calendar/sync', {
+                        method: 'POST',
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        alert(data.error || '동기화에 실패했습니다.');
+                        return;
+                      }
+                      alert(
+                        `동기화 완료: ${data.synced}개 성공, ${data.failed}개 실패${
+                          data.errors?.length ? `\n\n오류:\n${data.errors.slice(0, 5).join('\n')}` : ''
+                        }`
+                      );
+                    } catch (error) {
+                      alert('동기화 중 오류가 발생했습니다.');
+                    } finally {
+                      setCalendarLinking(false);
+                    }
+                  }}
+                  className="rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
+                >
+                  기존 업무 동기화
+                </button>
+                <button
+                  type="button"
+                  disabled={calendarLinking}
+                  onClick={async () => {
+                    if (!confirm('Google Calendar에서 이벤트를 가져와서 앱의 업무로 추가하시겠습니까?\n\n[업무]가 포함된 이벤트를 가져옵니다.')) {
                       return;
                     }
-                    alert(
-                      `동기화 완료: ${data.synced}개 성공, ${data.failed}개 실패${
-                        data.errors?.length ? `\n\n오류:\n${data.errors.slice(0, 5).join('\n')}` : ''
-                      }`
-                    );
-                  } catch (error) {
-                    alert('동기화 중 오류가 발생했습니다.');
-                  } finally {
-                    setCalendarLinking(false);
-                  }
-                }}
-                className="rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
-              >
-                기존 업무 동기화
-              </button>
+                    setCalendarLinking(true);
+                    try {
+                      const res = await authFetch('/api/integrations/google-calendar/import', {
+                        method: 'POST',
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        alert(data.error || '가져오기에 실패했습니다.');
+                        return;
+                      }
+                      alert(
+                        `가져오기 완료: ${data.imported}개 추가, ${data.failed}개 실패${
+                          data.errors?.length ? `\n\n오류:\n${data.errors.slice(0, 5).join('\n')}` : ''
+                        }`
+                      );
+                      // 페이지 새로고침하여 업무 목록 갱신
+                      window.location.reload();
+                    } catch (error) {
+                      alert('가져오기 중 오류가 발생했습니다.');
+                    } finally {
+                      setCalendarLinking(false);
+                    }
+                  }}
+                  className="rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
+                >
+                  Google Calendar에서 가져오기
+                </button>
+              </>
             )}
           </div>
         </section>

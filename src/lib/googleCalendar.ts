@@ -203,10 +203,7 @@ export async function createCalendarEvent(
     },
     reminders: {
       useDefault: false,
-      overrides: [
-        { method: 'email', minutes: 1440 }, // 1일 전
-        { method: 'popup', minutes: 60 }, // 1시간 전
-      ],
+      overrides: [], // 알림 없음
     },
   };
 
@@ -300,10 +297,7 @@ export async function updateCalendarEvent(
     },
     reminders: {
       useDefault: false,
-      overrides: [
-        { method: 'email', minutes: 1440 },
-        { method: 'popup', minutes: 60 },
-      ],
+      overrides: [], // 알림 없음
     },
   };
 
@@ -386,5 +380,82 @@ export async function deleteCalendarEvent(uid: string, eventId: string): Promise
   } catch (error) {
     console.error('Error deleting calendar event:', error);
     return false;
+  }
+}
+
+/**
+ * Google Calendar에서 이벤트 목록을 가져옵니다.
+ * @param uid 사용자 ID
+ * @param calendarId 캘린더 ID (기본값: 'primary' 또는 'Tasks' 캘린더)
+ * @param timeMin 시작 시간 (ISO 8601 형식, 선택사항)
+ * @param timeMax 종료 시간 (ISO 8601 형식, 선택사항)
+ * @returns 이벤트 목록
+ */
+export async function listCalendarEvents(
+  uid: string,
+  options?: {
+    calendarId?: string;
+    timeMin?: string;
+    timeMax?: string;
+    maxResults?: number;
+  }
+): Promise<any[]> {
+  const accessToken = await getValidAccessToken(uid);
+  if (!accessToken) {
+    console.warn(`No valid access token for user ${uid}`);
+    return [];
+  }
+
+  // 캘린더 ID 결정: 옵션에서 지정했거나 Tasks 캘린더, 없으면 primary
+  let calendarId = options?.calendarId;
+  if (!calendarId) {
+    const tasksCalendarId = await getTasksCalendarId(uid);
+    calendarId = tasksCalendarId || 'primary';
+  }
+
+  const params = new URLSearchParams();
+  if (options?.timeMin) {
+    params.append('timeMin', options.timeMin);
+  } else {
+    // 기본값: 오늘부터 1년 후까지
+    const now = new Date();
+    params.append('timeMin', now.toISOString());
+  }
+  if (options?.timeMax) {
+    params.append('timeMax', options.timeMax);
+  } else {
+    const oneYearLater = new Date();
+    oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+    params.append('timeMax', oneYearLater.toISOString());
+  }
+  if (options?.maxResults) {
+    params.append('maxResults', options.maxResults.toString());
+  } else {
+    params.append('maxResults', '250'); // 기본값: 최대 250개
+  }
+  params.append('singleEvents', 'true');
+  params.append('orderBy', 'startTime');
+
+  try {
+    const res = await fetch(
+      `${CALENDAR_API_BASE}/calendars/${calendarId}/events?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Failed to list calendar events:', err);
+      return [];
+    }
+
+    const data = await res.json();
+    return data.items || [];
+  } catch (error) {
+    console.error('Error listing calendar events:', error);
+    return [];
   }
 }
