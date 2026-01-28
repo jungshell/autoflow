@@ -128,17 +128,10 @@ export default function CalendarPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
-      <Header
-        title="캘린더"
-        subtitle="일정 관리"
-        ctaLabel="+ 새 업무"
-        onAddTask={() => window.location.href = '/tasks'}
-        showSettingsLink={true}
-      />
-
       <main className="mx-auto w-full max-w-7xl px-6 pb-8 pt-4">
         {/* 컨트롤 바 */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+          {/* 왼쪽: 월간, 주간 */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('month')}
@@ -162,6 +155,7 @@ export default function CalendarPage() {
             </button>
           </div>
 
+          {/* 가운데: < 2026년 1월 > */}
           <div className="flex items-center gap-2">
             <button
               onClick={viewMode === 'month' ? () => navigateMonth('prev') : () => navigateWeek('prev')}
@@ -169,12 +163,11 @@ export default function CalendarPage() {
             >
               ←
             </button>
-            <button
-              onClick={goToToday}
-              className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-            >
-              오늘
-            </button>
+            <div className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 min-w-[120px] text-center">
+              {viewMode === 'month'
+                ? `${year}년 ${month + 1}월`
+                : `${weekDays[0].getMonth() + 1}/${weekDays[0].getDate()} - ${weekDays[6].getMonth() + 1}/${weekDays[6].getDate()}`}
+            </div>
             <button
               onClick={viewMode === 'month' ? () => navigateMonth('next') : () => navigateWeek('next')}
               className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
@@ -183,10 +176,21 @@ export default function CalendarPage() {
             </button>
           </div>
 
-          <div className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            {viewMode === 'month'
-              ? `${year}년 ${month + 1}월`
-              : `${weekDays[0].getMonth() + 1}/${weekDays[0].getDate()} - ${weekDays[6].getMonth() + 1}/${weekDays[6].getDate()}`}
+          {/* 오른쪽: 오늘, + */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goToToday}
+              className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            >
+              오늘
+            </button>
+            <button
+              onClick={() => window.location.href = '/tasks'}
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-black text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              title="새 업무 추가"
+            >
+              +
+            </button>
           </div>
         </div>
 
