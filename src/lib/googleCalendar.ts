@@ -100,6 +100,71 @@ async function getValidAccessToken(uid: string): Promise<string | null> {
 }
 
 /**
+ * Tasks 캘린더 ID를 가져옵니다.
+ * Tasks 캘린더가 없으면 생성합니다.
+ */
+async function getTasksCalendarId(uid: string): Promise<string | null> {
+  const accessToken = await getValidAccessToken(uid);
+  if (!accessToken) return null;
+
+  try {
+    // 캘린더 목록 조회
+    const listRes = await fetch(`${CALENDAR_API_BASE}/users/me/calendarList`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!listRes.ok) {
+      console.error('Failed to list calendars:', await listRes.text());
+      return null;
+    }
+
+    const calendarList = await listRes.json();
+    const items = calendarList.items || [];
+
+    // "Tasks" 또는 "할 일" 캘린더 찾기
+    const tasksCalendar = items.find(
+      (cal: any) =>
+        cal.summary?.toLowerCase().includes('task') ||
+        cal.summary?.toLowerCase().includes('할 일') ||
+        cal.summary?.toLowerCase().includes('tasks')
+    );
+
+    if (tasksCalendar) {
+      return tasksCalendar.id;
+    }
+
+    // Tasks 캘린더가 없으면 생성
+    const newCalendar = {
+      summary: 'Tasks',
+      description: 'AutoFlow 업무 일정',
+      timeZone: 'Asia/Seoul',
+    };
+
+    const createRes = await fetch(`${CALENDAR_API_BASE}/calendars`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newCalendar),
+    });
+
+    if (!createRes.ok) {
+      console.error('Failed to create Tasks calendar:', await createRes.text());
+      return null;
+    }
+
+    const created = await createRes.json();
+    return created.id;
+  } catch (error) {
+    console.error('Error getting Tasks calendar ID:', error);
+    return null;
+  }
+}
+
+/**
  * Google Calendar에 이벤트를 생성합니다.
  * @param uid 사용자 ID
  * @param task Task 객체
@@ -145,8 +210,31 @@ export async function createCalendarEvent(
     },
   };
 
+  // Tasks 캘린더 ID 가져오기
+  const calendarId = await getTasksCalendarId(uid);
+  if (!calendarId) {
+    console.warn(`Failed to get Tasks calendar ID for user ${uid}, falling back to primary`);
+    // Tasks 캘린더를 찾을 수 없으면 기본 캘린더 사용
+    const fallbackCalendarId = 'primary';
+    const res = await fetch(`${CALENDAR_API_BASE}/calendars/${fallbackCalendarId}/events`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(event),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Failed to create calendar event:', err);
+      return null;
+    }
+    const created = await res.json();
+    return created.id ?? null;
+  }
+
   try {
-    const res = await fetch(`${CALENDAR_API_BASE}/calendars/primary/events`, {
+    const res = await fetch(`${CALENDAR_API_BASE}/calendars/${calendarId}/events`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -219,8 +307,29 @@ export async function updateCalendarEvent(
     },
   };
 
+  // Tasks 캘린더 ID 가져오기
+  const calendarId = await getTasksCalendarId(uid);
+  if (!calendarId) {
+    console.warn(`Failed to get Tasks calendar ID for user ${uid}, falling back to primary`);
+    const fallbackCalendarId = 'primary';
+    const res = await fetch(`${CALENDAR_API_BASE}/calendars/${fallbackCalendarId}/events/${eventId}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(event),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Failed to update calendar event:', err);
+      return false;
+    }
+    return true;
+  }
+
   try {
-    const res = await fetch(`${CALENDAR_API_BASE}/calendars/primary/events/${eventId}`, {
+    const res = await fetch(`${CALENDAR_API_BASE}/calendars/${calendarId}/events/${eventId}`, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -254,8 +363,12 @@ export async function deleteCalendarEvent(uid: string, eventId: string): Promise
     return false;
   }
 
+  // Tasks 캘린더 ID 가져오기
+  const calendarId = await getTasksCalendarId(uid);
+  const targetCalendarId = calendarId || 'primary';
+
   try {
-    const res = await fetch(`${CALENDAR_API_BASE}/calendars/primary/events/${eventId}`, {
+    const res = await fetch(`${CALENDAR_API_BASE}/calendars/${targetCalendarId}/events/${eventId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${accessToken}`,

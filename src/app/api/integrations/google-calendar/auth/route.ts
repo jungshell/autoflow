@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getUidFromRequest } from '@/lib/apiAuth';
 
-const SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+// 캘린더 목록 조회를 위해 calendar.readonly도 추가
+const SCOPE = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
 const BASE = 'https://accounts.google.com/o/oauth2/v2/auth';
 
 /**
