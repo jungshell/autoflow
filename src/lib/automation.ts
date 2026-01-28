@@ -80,8 +80,8 @@ export interface DailySummaryData {
   };
 }
 
-export async function generateDailySummaryData(): Promise<DailySummaryData> {
-  const tasks = await getTasks();
+export async function generateDailySummaryData(ownerId?: string | null): Promise<DailySummaryData> {
+  const tasks = await getTasks(ownerId);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfToday = new Date(today);

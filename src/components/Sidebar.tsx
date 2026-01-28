@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 const navItems = [
   { label: '대시보드', icon: '📊', href: '/' },
   { label: '업무', icon: '✓', href: '/tasks' },
+  { label: '캘린더', icon: '📅', href: '/calendar' },
   { label: 'Meeting', icon: '💬', href: '/meeting' },
   { label: 'PDF Reader', icon: '📄', href: '/pdf-reader' },
   { label: 'Emoji Tone', icon: '😊', href: '/emoji-tone' },

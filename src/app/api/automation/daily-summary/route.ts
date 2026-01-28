@@ -42,6 +42,8 @@ async function handleDailySummary() {
     }
 
     // 상세 요약 데이터 생성
+    // Cron job은 모든 사용자 데이터를 포함하지만, 실제로는 사용자별로 개별 요약을 생성해야 함
+    // 현재는 전체 요약으로 처리 (나중에 사용자별 개별 요약으로 개선 가능)
     const summaryData = await generateDailySummaryData();
     const summary = summaryData.summary;
     

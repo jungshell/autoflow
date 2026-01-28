@@ -13,6 +13,8 @@ function formatTime(dateStr?: string | null) {
 }
 
 export default async function BriefingPreviewPage() {
+  // 프리뷰 페이지는 현재 사용자 데이터만 표시 (ownerId는 서버에서 추출 필요)
+  // 일단은 전체 데이터로 표시 (실제 사용 시에는 getUidFromRequest로 필터링)
   const data = await generateDailySummaryData();
 
   const { stats, todayTasks, threeDayTasks, urgentTasks, delayedTasks } = data;
