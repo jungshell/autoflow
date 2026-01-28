@@ -33,8 +33,9 @@ Vercel 환경 변수는:
    - JSON만 입력:
 
 ```
-{"type":"service_account","project_id":"schedule-checker-b0eb7","private_key_id":"d07637702abc6479b1d761406a8d9786d515150d","private_key":"-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpzUVX3gtpCbJP\n...\n-----END PRIVATE KEY-----\n","client_email":"firebase-adminsdk-fbsvc@schedule-checker-b0eb7.iam.gserviceaccount.com",...}
+{"type":"service_account","project_id":"[프로젝트ID]","private_key_id":"[키ID]","private_key":"-----BEGIN PRIVATE KEY-----\n[키 내용]\n-----END PRIVATE KEY-----\n","client_email":"[이메일]",...}
 ```
+**주의**: 실제 값은 문서에 포함하지 마세요. Firebase Console에서 다운로드한 JSON 파일의 내용을 직접 사용하세요.
 
 **중요:**
 - 작은따옴표(`'`) 없이 JSON만 입력
@@ -66,8 +67,9 @@ Vercel 환경 변수는:
 **3. FIREBASE_PRIVATE_KEY**
 - Value: (`.env.local`의 JSON에서 `private_key` 값 복사)
 ```
------BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpzUVX3gtpCbJP\nGcXV9jBZUsP2P5folVOCeFXzNtBrcZNq3cfg2Mt6jpjR7tkAkgrUWtkcnHhZuWBI\nBSThzxvvLexRwVT9v3eFgvBY1/umCbhst0vyyaKpSKV56USNY4UBhnyOi/WX1XKC\nX4VqXrJlQ0qWd43oCKVBn21NX0txnL+W+3kWYyafukLtITTmiGxQ+X+5O5/2Vm+3\nfUCQeGl2VqKDvziXOcGA3fuuJO5sCkpBKpTwGSCaicmkjTggkeyPFPxMqMkhZS9f\n5Lw+w2Q51X/DtcIIYqWdd0i9mqV80ASxYxnZW7r/+S2sxvPW2DQh6kUUnC7lDy8M\nR8LbmYyfAgMBAAECggEAFFa8GZxFLZ21t/fUVJ6ah/h79IEFhxxr1lLnqKxGJriB\n+ej6yhnttY5jC7JaV9Embu062Ex9tfGYcMf89PdD11Be4CQSNBq9DEb01w932xmK\n96q09C3mx/Qlrgac6XqkMdyUCtcE4dz1TFx4tJcHM03uHzvOyZ5PfR7FjuD9Pmxf\ntTV8XTKjM3S0x3JjRKuF8t5suHkOulJO2w1nof7NOmz13j1U5aIP+314MpKsFKr2\nralLTZ36c5+3CU2yq4DI7M2wm3udFwL/ss5hgjy1y7etm6+mrN5KSFGy9qQIMZB0\nInzQDWPzC19A6gpXqACATQC2uFzzNaEs1Tal2sc3gQKBgQDu7OX+j5UaS3CPyKol\nz7eI9lI8BdnCLrQ0Pz2WEVI8ZZmQ2YK8pi5NIimUUM/bYz94lcJiaRuu0A+bxTfC\nLtGyVWfGPLyDhjoStkzznD/yc6eWwC+v8z+CrX4ykvoRBnIy+a1YLitLVZCtQegj\nF/prYlSHa2PiE5iFR61AvcA9oQKBgQC178Sua/cw2d4TA+F6vNkFUo214HVk4HMr\nDe1EYIuffdmxOfLPdfASz5+bm1S6F3+jZ/eoB4CruMvhygwV9lWS8SDvlUvvbR49\naSZqf3tKXZQzpkdx4MwGvcB/GWA+L4NlvjONz1KZTM234UY0IlOAbqznbw1EUgFg\nkz8pTTsiPwKBgQC0/vOQr1bFr6aa1enHcR7Ze7h6TfhTuSu8dLgD6iVBKbp217/J\nh56Fwj57Y+jCiuH3SIQUJwnYmTdpyrJdwTgL/9T4gORSQqnVqRKMba6nzeOEOR0n\nDn/rT+DNETitExQJ98jQh1E25aAPEGF5zF1hYgElAT6OckfVl6Hw7I4oYQKBgFhk\nurlHqVyprXStoQJB+GrWlhU0jbTKPApCBPIAujVuLrMlhWv4UADDsTcn+71CJ3hb\nzf5sTr6f1SbJRJ/zA9aVorvkXHViHZwWl1yMvXj/CD8j3XhdkKMB1CGsUY9FBGEN\nTPzsKqRipVxebf5sYwd2PjlfQiHceeDTCY/mfwF/AoGAB0P0ue5Pc6UhVHAgusDM\nTUL+lOtiFWMBsGj5247zVa1t0M5PKPMK2ufM2xiAvU3oVNp6EZVuA+XZJT1rnx0g\nmUMmQQf+j+r6UhMTB8Yb7YNpYg7ZGQdLP+MxMJOtu4Z8IAfYO2prJafCMncV0w4r\nuo7RBmYbGvNbRKvpaOp9fAQ=\n-----END PRIVATE KEY-----\n
+-----BEGIN PRIVATE KEY-----\n[여기에 실제 private_key 값 입력]\n-----END PRIVATE KEY-----\n
 ```
+**주의**: 실제 키 값은 문서에 포함하지 마세요. `.env.local` 파일에서만 복사하여 Vercel 환경 변수에 직접 입력하세요.
 - Environment: All Environments
 
 **중요:**

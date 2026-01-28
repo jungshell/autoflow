@@ -30,8 +30,9 @@
 
 **올바른 형식:**
 ```
------BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCpzUVX3gtpCbJP\nGcXV9jBZUsP2P5folVOCeFXzNtBrcZNq3cfg2Mt6jpjR7tkAkgrUWtkcnHhZuWBI\n...\n-----END PRIVATE KEY-----\n
+-----BEGIN PRIVATE KEY-----\n[실제 키 내용]\n-----END PRIVATE KEY-----\n
 ```
+**주의**: 실제 키 값은 문서에 포함하지 마세요. Firebase Console에서 다운로드한 키 파일의 `private_key` 값을 사용하세요.
 
 **잘못된 형식:**
 - 실제 줄바꿈이 있는 경우 (Vercel 환경 변수는 한 줄만 지원)
