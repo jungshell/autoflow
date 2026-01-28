@@ -19,6 +19,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -41,8 +42,17 @@ export default function CalendarPage() {
     if (statusFilter) {
       filtered = filtered.filter((t) => t.status === statusFilter);
     }
+    if (searchTerm.trim()) {
+      const q = searchTerm.trim().toLowerCase();
+      filtered = filtered.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.description?.toLowerCase().includes(q) ||
+          t.assigner?.toLowerCase().includes(q)
+      );
+    }
     return filtered;
-  }, [tasks, priorityFilter, statusFilter]);
+  }, [tasks, priorityFilter, statusFilter, searchTerm]);
 
   // 날짜별로 업무 그룹화 (타임존 문제 해결: 로컬 날짜 기준)
   const tasksByDate = useMemo(() => {
@@ -166,6 +176,35 @@ export default function CalendarPage() {
     const key = getDateKey(date);
     return tasksByDate.get(key) || [];
   };
+
+  // 주간/월간 통계
+  const calendarStats = useMemo(() => {
+    const allTasksInView = viewMode === 'month' 
+      ? monthDays.flatMap((date) => getTasksForDate(date))
+      : weekDays.flatMap((date) => getTasksForDate(date));
+    
+    const completed = allTasksInView.filter((t) => t.status === 'done').length;
+    const total = allTasksInView.length;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    
+    // 가장 바쁜 날
+    let busiestDate = '';
+    let maxCount = 0;
+    taskCountsByDate.forEach((count, dateKey) => {
+      if (count > maxCount) {
+        maxCount = count;
+        busiestDate = dateKey;
+      }
+    });
+
+    return {
+      total,
+      completed,
+      completionRate,
+      busiestDate,
+      busiestCount: maxCount,
+    };
+  }, [viewMode, monthDays, weekDays, tasksByDate, taskCountsByDate]);
 
   const weekDayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -321,37 +360,70 @@ export default function CalendarPage() {
                   }}
                   title="더블클릭하여 해당 날짜에 업무 추가"
                 >
-                  <div
-                    className={`mb-1 text-sm font-medium ${
-                      isTodayDate
-                        ? 'flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white'
-                        : isCurrentMonthDay
-                        ? 'text-zinc-900 dark:text-zinc-100'
-                        : 'text-zinc-400 dark:text-zinc-600'
-                    }`}
-                  >
-                    {date.getDate()}
-                  </div>
-                  <div className="space-y-1">
-                    {dateTasks.slice(0, 3).map((task) => {
-                      const priorityColors = {
-                        urgent: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-                        high: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-                        medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-                        low: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-                      };
-                      const color =
-                        priorityColors[task.priority || 'medium'] || priorityColors.medium;
+                  <div className="mb-1 flex items-center justify-between">
+                    <div
+                      className={`text-sm font-medium ${
+                        isTodayDate
+                          ? 'flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white'
+                          : isCurrentMonthDay
+                          ? 'text-zinc-900 dark:text-zinc-100'
+                          : 'text-zinc-400 dark:text-zinc-600'
+                      }`}
+                    >
+                      {date.getDate()}
+                    </div>
+                    {/* 업무 개수 배지 (밀도 표시) */}
+                    {(() => {
+                      const dateKey = getDateKey(date);
+                      const count = taskCountsByDate.get(dateKey) || 0;
+                      if (count === 0) return null;
+                      // 업무 밀도에 따른 배경색
+                      const bgColor =
+                        count >= 5
+                          ? 'bg-red-200 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                          : count >= 3
+                          ? 'bg-orange-200 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
+                          : 'bg-emerald-200 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
                       return (
-                        <div
-                          key={task.id}
-                          className={`truncate rounded px-1.5 py-0.5 text-xs ${color}`}
-                          title={task.title}
-                        >
-                          {task.title}
+                        <div className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${bgColor}`}>
+                          {count}
                         </div>
                       );
-                    })}
+                    })()}
+                  </div>
+                  <div className="space-y-1">
+                    {dateTasks
+                      .sort((a, b) => {
+                        // 시간순 정렬
+                        const aTime = a.dueAt ? new Date(a.dueAt).getTime() : 0;
+                        const bTime = b.dueAt ? new Date(b.dueAt).getTime() : 0;
+                        return aTime - bTime;
+                      })
+                      .slice(0, 3)
+                      .map((task) => {
+                        const priorityColors = {
+                          urgent: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+                          high: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+                          medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+                          low: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+                        };
+                        const color =
+                          priorityColors[task.priority || 'medium'] || priorityColors.medium;
+                        const timeStr = task.dueAt ? formatTime(task.dueAt) : '';
+                        return (
+                          <div
+                            key={task.id}
+                            className={`truncate rounded px-1.5 py-0.5 text-xs ${color} cursor-pointer hover:opacity-80 transition-opacity`}
+                            title={`${task.title}${task.description ? ` - ${task.description}` : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = `/tasks/${task.id}`;
+                            }}
+                          >
+                            {timeStr ? `${timeStr} / ${task.title}` : task.title}
+                          </div>
+                        );
+                      })}
                     {dateTasks.length > 3 && (
                       <div className="text-xs text-zinc-500 dark:text-zinc-400">
                         +{dateTasks.length - 3}건
@@ -365,7 +437,7 @@ export default function CalendarPage() {
         </div>
 
         {/* 범례 및 통계 */}
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-700 dark:bg-zinc-800">
             <span className="font-semibold text-zinc-700 dark:text-zinc-300">우선순위:</span>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -398,6 +470,18 @@ export default function CalendarPage() {
                 <div className="h-3 w-3 rounded-full bg-red-200 dark:bg-red-900/40" />
                 <span className="text-xs text-zinc-600 dark:text-zinc-400">많음 (5건 이상)</span>
               </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4 text-sm dark:border-zinc-700 dark:bg-zinc-800">
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">통계:</span>
+            <div className="mt-2 space-y-1 text-xs text-zinc-600 dark:text-zinc-400">
+              <div>완료율: {calendarStats.completionRate}%</div>
+              <div>총 업무: {calendarStats.total}건</div>
+              {calendarStats.busiestDate && (
+                <div>
+                  가장 바쁜 날: {calendarStats.busiestDate.replace(/-/g, '.')} ({calendarStats.busiestCount}건)
+                </div>
+              )}
             </div>
           </div>
         </div>
