@@ -103,7 +103,7 @@ async function getValidAccessToken(uid: string): Promise<string | null> {
  * Tasks 캘린더 ID를 가져옵니다.
  * Tasks 캘린더가 없으면 생성합니다.
  */
-async function getTasksCalendarId(uid: string): Promise<string | null> {
+export async function getTasksCalendarId(uid: string): Promise<string | null> {
   const accessToken = await getValidAccessToken(uid);
   if (!accessToken) return null;
 
