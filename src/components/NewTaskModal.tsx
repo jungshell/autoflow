@@ -27,6 +27,8 @@ type NewTaskModalProps = {
   initialTitle?: string;
   /** 템플릿으로 생성 시 미리 채울 설명(체크리스트 등) */
   initialDescription?: string;
+  /** 초기 마감일 설정 (캘린더에서 날짜 선택 시) */
+  initialDueDate?: string;
 };
 
 export default function NewTaskModal({
@@ -39,6 +41,7 @@ export default function NewTaskModal({
   ownerId = "user1",
   initialTitle: initialTitleProp,
   initialDescription: initialDescriptionProp,
+  initialDueDate: initialDueDateProp,
 }: NewTaskModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -96,12 +99,21 @@ export default function NewTaskModal({
       setTitle(initialTitleProp ?? "");
       setDescription(initialDescriptionProp ?? "");
     }
+    // 초기 마감일 설정 (캘린더에서 날짜 선택 시)
+    if (initialDueDateProp && !initialTask && open) {
+      const date = new Date(initialDueDateProp);
+      setDueDate(date.toISOString().slice(0, 10));
+      const h = date.getHours();
+      const m = date.getMinutes();
+      setDueHour(h >= 9 && h <= 18 ? h.toString().padStart(2, "0") : "18");
+      setDueMinute(m <= 15 ? "00" : m <= 45 ? "30" : "00");
+    }
     if (!initialTask && open) {
       const defaults = getTaskDefaults();
       if (defaults.assigner !== undefined) setAssigner(defaults.assigner);
       if (defaults.assigneeId !== undefined) setAssigneeId(defaults.assigneeId);
     }
-  }, [open, initialTask, initialTitleProp, initialDescriptionProp]);
+  }, [open, initialTask, initialTitleProp, initialDescriptionProp, initialDueDateProp]);
 
   // ESC 키로 닫기
   useEffect(() => {

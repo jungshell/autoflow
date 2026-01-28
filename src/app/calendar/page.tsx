@@ -2,15 +2,21 @@
 
 import { useState, useMemo } from 'react';
 import { useTasks } from '@/hooks/useTasks';
-import Header from '@/components/Header';
+import { useContacts } from '@/hooks/useContacts';
+import { useAuth } from '@/components/AuthProvider';
+import NewTaskModal from '@/components/NewTaskModal';
 import { formatDate } from '@/lib/utils';
 
 type ViewMode = 'month' | 'week';
 
 export default function CalendarPage() {
-  const { tasks, loading } = useTasks();
+  const { tasks, loading, refetch } = useTasks();
+  const { contacts } = useContacts();
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -185,7 +191,10 @@ export default function CalendarPage() {
               오늘
             </button>
             <button
-              onClick={() => window.location.href = '/tasks'}
+              onClick={() => {
+                setSelectedDate(currentDate);
+                setIsNewTaskOpen(true);
+              }}
               className="flex h-9 w-9 items-center justify-center rounded-lg bg-black text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
               title="새 업무 추가"
             >
@@ -223,6 +232,11 @@ export default function CalendarPage() {
                       ? 'bg-zinc-50 dark:bg-zinc-900/50'
                       : 'bg-white dark:bg-zinc-800'
                   }`}
+                  onDoubleClick={() => {
+                    setSelectedDate(date);
+                    setIsNewTaskOpen(true);
+                  }}
+                  title="더블클릭하여 해당 날짜에 업무 추가"
                 >
                   <div
                     className={`mb-1 text-sm font-medium ${
@@ -286,6 +300,23 @@ export default function CalendarPage() {
           </div>
         </div>
       </main>
+
+      {/* 새 업무 모달 */}
+      <NewTaskModal
+        open={isNewTaskOpen}
+        contacts={contacts}
+        onClose={() => {
+          setIsNewTaskOpen(false);
+          setSelectedDate(null);
+        }}
+        onCreated={() => {
+          refetch();
+          setIsNewTaskOpen(false);
+          setSelectedDate(null);
+        }}
+        ownerId={user?.uid ?? 'user1'}
+        initialDueDate={selectedDate ? selectedDate.toISOString().slice(0, 10) : undefined}
+      />
     </div>
   );
 }
